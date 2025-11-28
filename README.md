@@ -15,11 +15,11 @@
 [![Issues](https://img.shields.io/github/issues/username/wellbot?style=for-the-badge&color=red)](https://github.com/username/wellbot/issues)
 [![Forks](https://img.shields.io/github/forks/username/wellbot?style=for-the-badge&color=blue)](https://github.com/username/wellbot/network/members)
 
-![WellBot Demo](https://via.placeholder.com/800x400/4A90E2/FFFFFF?text=WellBot+Chat+Interface)
+
 
 *Bridging the gap in mental health accessibility through AI-powered conversational support*
 
-[🚀 Demo](#demo) • [📖 Documentation](#documentation) • [🛠️ Installation](#installation) • [🤝 Contributing](#contributing) • [📞 Support](#support)
+ • [📖 Documentation](https://github.com/Omkar-b07/TeamA_WellBot/blob/main/WellBot%20Documentation.docx) • [🛠️ Installation](#installation) • [🤝 Contributing](#contributing) • [📞 Support](#support)
 
 </div>
 
