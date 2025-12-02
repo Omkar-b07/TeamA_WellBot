@@ -139,6 +139,14 @@ def register():
 
     if not email or not password:
         return jsonify({"msg": "Email and password are required"}), 400
+    
+    if len(password) < 8:
+        return jsonify({"msg": "Password must be at least 8 characters long"}), 400
+    
+    if len(password) > 128:
+        return jsonify({"msg": "Password is too long (max 128 characters)"}), 400
+   
+
     if User.query.filter_by(email=email).first():
         return jsonify({"msg": "Email already exists"}), 400
 
