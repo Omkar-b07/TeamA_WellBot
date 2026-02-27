@@ -11,6 +11,12 @@ from functools import wraps
 from datetime import datetime
 from sqlalchemy import func # <-- IMPT: Needed for charts
 
+def env_bool(name: str, default: bool = False) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
 # --- App Initialization ---
 web_api_dir = os.path.abspath(os.path.dirname(__file__))
 frontend_dir = os.path.abspath(os.path.join(web_api_dir, '..', '..', 'frontend'))
@@ -22,18 +28,39 @@ app = Flask(
 
 # --- Database Configuration ---
 db_path = os.path.join(web_api_dir, 'project.db')
-app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
+app_env = os.getenv("APP_ENV", "development").lower()
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', f'sqlite:///{db_path}')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config["SECRET_KEY"] = "your-admin-session-secret-key"
+app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "")
 
 # --- JWT Configuration ---
-app.config["JWT_SECRET_KEY"] = "3ae0710d88e55092c2cde9d5b597d0c1d51fae8fa54481b9f2c83bb4139e0243"
+app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "")
 app.config["JWT_TOKEN_LOCATION"] = ["headers", "cookies"]
-app.config["JWT_COOKIE_CSRF_PROTECT"] = False
+app.config["JWT_COOKIE_CSRF_PROTECT"] = env_bool("JWT_COOKIE_CSRF_PROTECT", default=app_env == "production")
+app.config["JWT_COOKIE_SECURE"] = env_bool("JWT_COOKIE_SECURE", default=app_env == "production")
+app.config["JWT_COOKIE_SAMESITE"] = os.getenv("JWT_COOKIE_SAMESITE", "Lax")
+
+if app_env == "production":
+    if not app.config["SECRET_KEY"]:
+        raise RuntimeError("SECRET_KEY is required in production")
+    if not app.config["JWT_SECRET_KEY"]:
+        raise RuntimeError("JWT_SECRET_KEY is required in production")
+
+if not app.config["SECRET_KEY"]:
+    app.config["SECRET_KEY"] = "dev-only-secret-key"
+if not app.config["JWT_SECRET_KEY"]:
+    app.config["JWT_SECRET_KEY"] = "dev-only-jwt-secret-key"
+
+RASA_API_URL = os.getenv("RASA_API_URL", "http://127.0.0.1:5005/webhooks/rest/webhook")
+
 jwt = JWTManager(app)
 
 # --- Database Setup ---
 db = SQLAlchemy(app)
+
+def initialize_database() -> None:
+    with app.app_context():
+        db.create_all()
 
 # --- Database Models ---
 class User(db.Model):
@@ -223,7 +250,6 @@ def chat():
     if not message:
         return jsonify({"error": "No message provided"}), 400
 
-    RASA_API_URL = "http://127.0.0.1:5005/webhooks/rest/webhook"
     payload = {
         "sender": current_user_id,
         "message": message,
@@ -246,6 +272,10 @@ def chat():
     except Exception as e:
         print(f"!!! General Exception in /chat: {e}")
         return jsonify({"error": "An internal error occurred"}), 500
+
+@app.route('/health', methods=['GET'])
+def health():
+    return jsonify({"status": "ok"}), 200
 
 @app.route('/feedback', methods=['POST'])
 @jwt_required()
@@ -438,6 +468,12 @@ def admin_delete_tip(id):
     return redirect(url_for('admin_dashboard'))
 
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
-    app.run(debug=True, port=5000, host='0.0.0.0')
+    initialize_database()
+    app.run(
+        debug=env_bool("APP_DEBUG", default=False),
+        port=int(os.getenv("PORT", "5000")),
+        host='0.0.0.0'
+    )
+
+if env_bool("AUTO_INIT_DB", default=True):
+    initialize_database()

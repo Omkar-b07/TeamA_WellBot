@@ -7,5 +7,8 @@ USER root
 # Install database libraries required by your actions.py
 RUN pip install --no-cache-dir sqlalchemy pandas
 
+WORKDIR /app
+COPY actions/ /app/actions/
+
 # Switch back to non-root user for security
 USER 1001

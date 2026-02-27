@@ -7,9 +7,19 @@ import os
 class ActionQueryKnowledgeBase(Action):
 
     def __init__(self):
-        db_path = os.path.join(os.path.dirname(__file__), '..', '..', 'web_api', 'project.db')
-        self.db_engine = create_engine(f'sqlite:///{os.path.abspath(db_path)}')
-        print(f"Action server connected to DB at: {os.path.abspath(db_path)}")
+        db_url = os.getenv("WELLBOT_DATABASE_URL")
+        if db_url:
+            self.db_engine = create_engine(db_url)
+            print("Action server connected using WELLBOT_DATABASE_URL")
+            return
+
+        db_path = os.getenv(
+            "WELLBOT_DB_PATH",
+            os.path.join(os.path.dirname(__file__), '..', '..', 'web_api', 'project.db')
+        )
+        absolute_db_path = os.path.abspath(db_path)
+        self.db_engine = create_engine(f'sqlite:///{absolute_db_path}')
+        print(f"Action server connected to DB at: {absolute_db_path}")
 
     def name(self) -> Text:
         return "action_query_knowledge_base"

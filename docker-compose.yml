@@ -1,7 +1,6 @@
-﻿version: '3.0'
+version: '3.9'
 
 services:
-  # 1. The Rasa Server
   rasa:
     image: rasa/rasa:3.6.2-full
     ports:
@@ -13,29 +12,46 @@ services:
       - --enable-api
       - --cors
       - "*"
-      - --debug
+      - --endpoints
+      - /app/endpoints.docker.yml
+      - --port
+      - "5005"
+    restart: unless-stopped
     depends_on:
       - action_server
 
-  # 2. The Action Server
   action_server:
     build: ./backend/rasa_bot
     volumes:
-      - ./backend/rasa_bot/actions:/app/actions
-      - ./backend/web_api/project.db:/web_api/project.db
+      - db_data:/data
+    environment:
+      - WELLBOT_DB_PATH=/data/project.db
     ports:
       - "5055:5055"
+    command: ["start", "--actions", "actions", "--port", "5055"]
+    restart: unless-stopped
 
-  # 3. The Flask Web App
   flask_app:
-    build: ./backend/web_api
+    build:
+      context: .
+      dockerfile: backend/web_api/Dockerfile
     ports:
       - "5000:5000"
     volumes:
-      - ./backend/web_api/project.db:/app/project.db
-      - ./frontend/templates:/frontend/templates
-      - ./frontend/static:/frontend/static
+      - db_data:/data
     environment:
-      - FLASK_ENV=production
+      - APP_ENV=production
+      - APP_DEBUG=false
+      - AUTO_INIT_DB=true
+      - SECRET_KEY=${SECRET_KEY}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - DATABASE_URL=sqlite:////data/project.db
+      - RASA_API_URL=http://rasa:5005/webhooks/rest/webhook
+      - JWT_COOKIE_SECURE=${JWT_COOKIE_SECURE:-true}
+      - JWT_COOKIE_CSRF_PROTECT=${JWT_COOKIE_CSRF_PROTECT:-true}
     depends_on:
       - rasa
+    restart: unless-stopped
+
+volumes:
+  db_data:

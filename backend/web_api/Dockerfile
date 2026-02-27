@@ -1,20 +1,17 @@
 # Use Python 3.10 as the base image
 FROM python:3.10-slim
 
-# Set the working directory inside the container
+ENV PYTHONUNBUFFERED=1
+
 WORKDIR /app
 
-# Copy the requirements file
-COPY requirements.txt .
+COPY backend/web_api/requirements.txt .
 
-# Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the Flask app code
-COPY . .
+COPY backend/web_api/ /app/
+COPY frontend/ /frontend/
 
-# Expose port 5000 (where Flask runs)
 EXPOSE 5000
 
-# Command to run the application
-CMD ["python", "app.py"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--threads", "4", "app:app"]

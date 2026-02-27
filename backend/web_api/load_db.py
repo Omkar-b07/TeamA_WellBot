@@ -4,9 +4,9 @@ import os
 
 
 CSV_FILE_NAME = 'wellness.csv'  
-
 DB_PATH = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'project.db')
-db_engine = create_engine(f'sqlite:///{DB_PATH}')
+DATABASE_URL = os.getenv("DATABASE_URL", f'sqlite:///{DB_PATH}')
+db_engine = create_engine(DATABASE_URL)
 
 try:
     print(f"Reading {CSV_FILE_NAME}...")
