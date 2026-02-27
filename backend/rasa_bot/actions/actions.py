@@ -1,4 +1,4 @@
-from typing import Any, Text, Dict, List
+﻿from typing import Any, Text, Dict, List
 from rasa_sdk import Action, Tracker
 from rasa_sdk.executor import CollectingDispatcher
 from sqlalchemy import create_engine, text
@@ -7,7 +7,7 @@ import os
 class ActionQueryKnowledgeBase(Action):
 
     def __init__(self):
-        db_path = os.path.join(os.path.dirname(__file__), '..', '..', 'InfyWellBot', 'project.db')
+        db_path = os.path.join(os.path.dirname(__file__), '..', '..', 'web_api', 'project.db')
         self.db_engine = create_engine(f'sqlite:///{os.path.abspath(db_path)}')
         print(f"Action server connected to DB at: {os.path.abspath(db_path)}")
 

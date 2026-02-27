@@ -1,4 +1,4 @@
-import os
+﻿import os
 import requests
 from flask import Flask, request, jsonify, render_template, redirect, url_for, session, flash, abort
 from flask_sqlalchemy import SQLAlchemy
@@ -12,10 +12,16 @@ from datetime import datetime
 from sqlalchemy import func # <-- IMPT: Needed for charts
 
 # --- App Initialization ---
-app = Flask(__name__)
+web_api_dir = os.path.abspath(os.path.dirname(__file__))
+frontend_dir = os.path.abspath(os.path.join(web_api_dir, '..', '..', 'frontend'))
+app = Flask(
+    __name__,
+    template_folder=os.path.join(frontend_dir, 'templates'),
+    static_folder=os.path.join(frontend_dir, 'static'),
+)
 
 # --- Database Configuration ---
-db_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'project.db')
+db_path = os.path.join(web_api_dir, 'project.db')
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config["SECRET_KEY"] = "your-admin-session-secret-key"
